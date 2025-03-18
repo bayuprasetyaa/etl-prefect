@@ -190,7 +190,7 @@ def tmdb_etl_mainflow(timestamp=datetime.datetime.now()):
         timestamp (_type_, optional): _description_. Defaults to datetime.datetime.now().
     """
     # Flow 1. Update Trending Movies
-    etl_flow(name="trending", endpoint="/trending/movie/day", func_transform=transform_trending_movies, method="append")
+    etl_flow(name="trending", endpoint="/trending/movie/day", func_transform=transform_trending_movies, method="replace")
     
     # Flow 2. Update Movie Genre
     # Read movieId from Trending Movies
