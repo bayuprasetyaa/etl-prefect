@@ -19,6 +19,7 @@ import requests
 from prefect import flow, task
 from prefect_gcp import GcpCredentials
 from google.oauth2 import service_account
+from zoneinfo import ZoneInfo
 
 
 # //*********** Project Setup ***********/
@@ -27,6 +28,7 @@ TMDB_API_KEY = os.getenv("TMDB_API_KEY")
 PROJECT_ID = os.getenv("PROJECT_ID")
 DATASET_ID = os.getenv("DATASET_ID")
 BASE_URL = os.getenv("BASE_URL")
+tz = ZoneInfo("Asia/Jakarta")
 # Load BigQuery Credentials
 CREDENTIALS = GcpCredentials.load("bigquery-credentials").get_credentials_from_service_account()
 
@@ -145,7 +147,7 @@ def transform_trending_movies(response:list[dict]):
     df = df.drop(columns=['original_title', 'media_type', 'genre_ids']) # Drop unnecesary column
     df['release_date'] = pd.to_datetime(df['release_date']) # fixing datetime object
     df['rank'] = df['popularity'].rank(ascending=False) # add ranking based on popularity
-    df['trend_date'] = datetime.datetime.now().date() # add ranking date
+    df['trend_date'] = datetime.datetime.now(tz=tz).date() # add ranking date
     return df
 
 # --- Custome transformation for Movie Details
@@ -183,14 +185,14 @@ def etl_flow(name:str, endpoint:str, bulk:bool=False, bulk_response:list=[], fun
 
 
 @flow(name="etl-flows", flow_run_name="etl-mainflow-{timestamp}",log_prints=True)
-def tmdb_etl_mainflow(timestamp=datetime.datetime.now()):
+def tmdb_etl_mainflow(timestamp=datetime.datetime.now(tz=tz)):
     """Mainflow process for running basic ETL 
 
     Args:
         timestamp (_type_, optional): _description_. Defaults to datetime.datetime.now().
     """
     # Flow 1. Update Trending Movies
-    etl_flow(name="trending", endpoint="/trending/movie/day", func_transform=transform_trending_movies, method="replace")
+    etl_flow(name="trending", endpoint="/trending/movie/day", func_transform=transform_trending_movies, method="append")
     
     # Flow 2. Update Movie Genre
     # Read movieId from Trending Movies
