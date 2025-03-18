@@ -140,7 +140,7 @@ def transform_trending_movies(response:list[dict]):
     df = pd.DataFrame(response["results"]) # convert to DataFrame
     
     # Create Movie Genre table and load to BigQuery
-    movie_genre = df[['id', 'genre_ids']]
+    movie_genre = df[['id', 'genre_ids']].explode('genre_ids')
     load_to_gbq(movie_genre, "movie_genre")
     # movie_genre.to_csv(f"movie_genre.csv") #test-function
 
